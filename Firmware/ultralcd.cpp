@@ -1005,6 +1005,7 @@ void lcd_status_screen()                          // NOT static due to using ins
 
 	if (lcd_draw_update)
 	{
+	#ifndef WEH002004_OLED //Refreshing the Status Screen is too noticible on OLED display
 		ReInitLCD++;
 		if (ReInitLCD == 30)
 		{
@@ -1016,7 +1017,7 @@ void lcd_status_screen()                          // NOT static due to using ins
 			if ((ReInitLCD % 10) == 0)
 				lcd_refresh_noclear(); //to maybe revive the LCD if static electricity killed it.
 		}
-
+	#endif
 		lcdui_print_status_screen();
 
 		if (farm_mode)
@@ -7475,7 +7476,7 @@ void lcd_belttest()
     
     uint16_t   X = eeprom_read_word((uint16_t*)(EEPROM_BELTSTATUS_X));
     uint16_t   Y = eeprom_read_word((uint16_t*)(EEPROM_BELTSTATUS_Y));
-	lcd_printf_P(_i("Checking X axis  ")); // share message with selftest
+	lcd_set_cursor(0,0), lcd_printf_P(_i("Checking X axis  ")); // share message with selftest
 	lcd_set_cursor(0,1), lcd_printf_P(PSTR("X: %u -> ..."),X);
     KEEPALIVE_STATE(IN_HANDLER);
     
