@@ -22,16 +22,11 @@
 // Printer name
 #define CUSTOM_MENDEL_NAME "Prusa i3 MK3"
 
-//Exrtuder Design R3 based printer, like Zaribo, Bear, Bondtech extruder
-//#define EXTRUDER_DESIGN_R3
-
-// WEH002004 OLED Display uncomment WEH002004_OLED if have this kind of display
-//#define WEH002004_OLED
-
 // Electronics
 #define MOTHERBOARD BOARD_EINSY_1_0a
 #define STEEL_SHEET
 #define HAS_SECOND_SERIAL_PORT
+
 
 // Uncomment the below for the E3D PT100 temperature sensor (with or without PT100 Amplifier)
 //#define E3D_PT100_EXTRUDER_WITH_AMP
@@ -39,11 +34,6 @@
 //#define E3D_PT100_BED_WITH_AMP
 //#define E3D_PT100_BED_NO_AMP
 
-//Extruder Design R3 based printer, like Zaribo, Bear, Bondtech extruder
-//#define EXTRUDER_DESIGN_R3
-//#define BONDTECH_MK3S
-//#define BONDTECH_MOSQUITO
-//#define BONDTECH_M_MAGNUM
 
 /*------------------------------------
  AXIS SETTINGS
@@ -505,6 +495,9 @@
 
 #define ASA_PREHEAT_HOTEND_TEMP 260
 #define ASA_PREHEAT_HPB_TEMP 105
+
+#define PC_PREHEAT_HOTEND_TEMP 275
+#define PC_PREHEAT_HPB_TEMP 110
 
 #define ABS_PREHEAT_HOTEND_TEMP 255
 #define ABS_PREHEAT_HPB_TEMP 100

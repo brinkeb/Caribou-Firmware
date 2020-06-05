@@ -101,7 +101,7 @@ const char MSG_WIZARD_HEATING[] PROGMEM_I1 = ISTR("Preheating nozzle. Please wai
 const char MSG_WIZARD_QUIT[] PROGMEM_I1 = ISTR("You can always resume the Wizard from Calibration -> Wizard."); ////c=20 r=8
 const char MSG_YES[] PROGMEM_I1 = ISTR("Yes"); ////
 const char MSG_V2_CALIBRATION[] PROGMEM_I1 = ISTR("First layer cal."); ////c=18
-const char WELCOME_MSG[] PROGMEM_I1 = ISTR(CUSTOM_MENDEL_NAME); ////c=20
+const char WELCOME_MSG[] PROGMEM_I1 = ISTR(CUSTOM_MENDEL_NAME " OK."); ////c=20
 const char MSG_OFF[] PROGMEM_I1 = ISTR("Off"); ////
 const char MSG_ON[] PROGMEM_I1 = ISTR("On"); ////
 const char MSG_NA[] PROGMEM_I1 = ISTR("N/A"); ////
@@ -140,8 +140,9 @@ const char MSG_DIM[] PROGMEM_I1 = ISTR("Dim"); ////c=6
 const char MSG_AUTO[] PROGMEM_I1 = ISTR("Auto"); ////c=6
 #ifdef IR_SENSOR_ANALOG
 // Beware - the space at the beginning is necessary since it is reused in LCD menu items which are to be with a space
-const char MSG_04_OR_NEWER[] PROGMEM_I1 = ISTR(" 0.4 or newer");////c=18
-const char MSG_03_OR_OLDER[] PROGMEM_I1 = ISTR(" 0.3 or older");////c=18
+const char MSG_IR_04_OR_NEWER[] PROGMEM_I1 = ISTR(" 0.4 or newer");////c=18
+const char MSG_IR_03_OR_OLDER[] PROGMEM_I1 = ISTR(" 0.3 or older");////c=18
+const char MSG_IR_UNKNOWN[] PROGMEM_I1 = ISTR("unknown state");////c=18
 #endif
 
 //not internationalized messages

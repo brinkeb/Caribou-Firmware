@@ -21,9 +21,6 @@
 // Printer name
 #define CUSTOM_MENDEL_NAME "Prusa i3 MK2.5"
 
-//Exrtuder Design R3 based printer, like Zaribo, Bear, Bondtech extruder
-//#define EXTRUDER_DESIGN_R3
-
 // Electronics
 #define MOTHERBOARD BOARD_RAMBO_MINI_1_3
 
@@ -387,6 +384,9 @@
 
 #define ASA_PREHEAT_HOTEND_TEMP 260
 #define ASA_PREHEAT_HPB_TEMP 105
+
+#define PC_PREHEAT_HOTEND_TEMP 275
+#define PC_PREHEAT_HPB_TEMP 105
 
 #define ABS_PREHEAT_HOTEND_TEMP 255
 #define ABS_PREHEAT_HPB_TEMP 100

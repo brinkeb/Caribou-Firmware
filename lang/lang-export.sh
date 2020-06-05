@@ -20,7 +20,6 @@ if [ "$LNG" = "all" ]; then
  ./lang-export.sh de
  ./lang-export.sh es
  ./lang-export.sh fr
- ./lang-export.sh nl
  ./lang-export.sh it
  ./lang-export.sh pl
  exit 0
@@ -47,7 +46,6 @@ else
    *de*) echo "German" ;;
    *es*) echo "Spanish" ;;
    *fr*) echo "French" ;;
-   *nl*) echo "Dutch" ;;
    *it*) echo "Italian" ;;
    *pl*) echo "Polish" ;;
   esac)
@@ -72,7 +70,7 @@ CNTNT=$(grep '^\"\\x00\"' -c $INFILE)
 echo " $CNTTXT texts, $CNTNT not translated"
 
 # list .cpp, .c and .h files from source folder
-SRCFILES=$(ls "$SRCDIR"/*.cpp "$SRCDIR"/*.c "$SRCDIR"/*.h "$SRCDIR"/variants/*.h)
+SRCFILES=$(ls "$SRCDIR"/*.cpp "$SRCDIR"/*.c "$SRCDIR"/*.h)
 
 echo " selected language=$LNGNAME"
 
