@@ -1076,6 +1076,8 @@ void setup()
 #endif
 	SERIAL_ECHO_START;
 	printf_P(PSTR(" " FW_VERSION_FULL "\n"));
+	//Print Git commit hash
+	printf_P(PSTR("Commit Hash: " FW_COMMIT_HASH "\n"));
 
 	//SERIAL_ECHOPAIR("Active sheet before:", static_cast<unsigned long int>(eeprom_read_byte(&(EEPROM_Sheets_base->active_sheet))));
 
@@ -2197,12 +2199,21 @@ bool calibrate_z_auto()
 	plan_buffer_line_destinationXYZE(feedrate / 60);
 	st_synchronize();
 	enable_endstops(endstops_enabled);
-	if (PRINTER_TYPE == PRINTER_MK3) {
+	#ifndef EXTRUDER_DESIGN_R3
+	if (PRINTER_TYPE == PRINTER_MK3S) {
 		current_position[Z_AXIS] = Z_MAX_POS + 2.0;
 	}
 	else {
 		current_position[Z_AXIS] = Z_MAX_POS + 9.0;
 	}
+	#else
+	if ((PRINTER_TYPE == PRINTER_MK3S) || (PRINTER_TYPE == PRINTER_MK3) || (PRINTER_TYPE == PRINTER_MK25S)) {
+		current_position[Z_AXIS] = Z_MAX_POS + 2.0;
+	}
+	else {
+		current_position[Z_AXIS] = Z_MAX_POS + 9.0;
+	}
+	#endif
 	plan_set_position_curposXYZE();
 	return true;
 }
@@ -3073,7 +3084,7 @@ template<typename T>
 static T gcode_M600_filament_change_z_shift()
 {
 #ifdef FILAMENTCHANGE_ZADD
-	static_assert(Z_MAX_POS < (255 - FILAMENTCHANGE_ZADD), "Z-range too high, change the T type from uint8_t to uint16_t");
+	static_assert(Z_MAX_POS < (Z_MAX_POS +45 - FILAMENTCHANGE_ZADD), "Z-range too high, change the T type from uint8_t to uint16_t"); //the value '255' uint8_t just saves 2 bytes of program storage space
 	// avoid floating point arithmetics when not necessary - results in shorter code
 	T ztmp = T( current_position[Z_AXIS] );
 	T z_shift = 0;
@@ -4285,6 +4296,14 @@ if(eSoundMode!=e_SOUND_MODE_SILENT)
        #endif 
       break;
       #endif //FWRETRACT
+    
+
+    /*!
+	### G21 - Sets Units to Millimters <a href="https://reprap.org/wiki/G-code#G21:_Set_Units_to_Millimeters">G21: Set Units to Millimeters</a>
+	Units are in millimeters. Prusa doesn't support inches.
+    */
+    case 21: 
+      break; //Doing nothing. This is just to prevent serial UNKOWN warnings.
     
 
     /*!

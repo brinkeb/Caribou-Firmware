@@ -55,7 +55,7 @@
 
 // Steps per unit {X,Y,Z,E}
 //#define DEFAULT_AXIS_STEPS_PER_UNIT   {100,100,3200/8,140}
-#define DEFAULT_AXIS_STEPS_PER_UNIT   {100,100,3200/8,830}
+#define DEFAULT_AXIS_STEPS_PER_UNIT   {100,100,3200/8,415}
 //#define DEFAULT_AXIS_STEPS_PER_UNIT   {100,100,3200/8,560}
 
 // Endstop inverting
@@ -81,7 +81,7 @@
 #define X_MIN_POS 0
 #define Y_MAX_POS 212.5
 #define Y_MIN_POS -4 //orig -4
-#define Z_MAX_POS 320
+#define Z_MAX_POS 317
 #define Z_MIN_POS 0.15
 
 // Canceled home position
@@ -349,6 +349,8 @@
 #define EXTRUDER_2_AUTO_FAN_PIN   -1
 #define EXTRUDER_AUTO_FAN_TEMPERATURE 50
 #define EXTRUDER_AUTO_FAN_SPEED   255  // == full speed
+#define EXTRUDER_ALTFAN_DETECT
+#define EXTRUDER_ALTFAN_SPEED_SILENT 128
 
 
 
@@ -515,6 +517,9 @@
 
 #define ASA_PREHEAT_HOTEND_TEMP 260
 #define ASA_PREHEAT_HPB_TEMP 105
+
+#define PC_PREHEAT_HOTEND_TEMP 275
+#define PC_PREHEAT_HPB_TEMP 110
 
 #define ABS_PREHEAT_HOTEND_TEMP 255
 #define ABS_PREHEAT_HPB_TEMP 100

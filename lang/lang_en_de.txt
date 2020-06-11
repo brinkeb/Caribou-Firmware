@@ -128,7 +128,7 @@
 
 #MSG_MENU_BELT_STATUS c=18
 "Belt status"
-"Gurtstatus"
+"Riemstatus"
 
 #MSG_RECOVER_PRINT c=20 r=2
 "Blackout occurred. Recover print?"
@@ -136,7 +136,7 @@
 
 #
 "Calibrating home"
-"Kalibriere Start"
+"Kalib. Startpos"
 
 #MSG_CALIBRATE_BED
 "Calibrate XYZ"
@@ -240,7 +240,7 @@
 
 #MSG_EJECT_FILAMENT c=17 r=1
 "Eject filament"
-"Filamentauswurf"
+"Fil. auswerfen"
 
 #MSG_EJECTING_FILAMENT c=20 r=1
 "Ejecting filament"
@@ -308,7 +308,7 @@
 
 #
 "Fail stats"
-"Fehlerstatistik"
+"Fehlerstats"
 
 #MSG_FAN_SPEED c=14
 "Fan speed"
@@ -972,7 +972,7 @@
 
 #MSG_SELFTEST_FAILED c=20
 "Selftest failed  "
-"Selbsttest Error "
+"Selbsttest misslang "
 
 #MSG_FORCE_SELFTEST c=20 r=8
 "Selftest will be run to calibrate accurate sensorless rehoming."
@@ -1028,7 +1028,7 @@
 
 #
 "Severe skew:"
-"Schwer.Schr:"
+"Sehr schraeg:"
 
 #MSG_SORT_ALPHA
 "Alphabet"
@@ -1044,7 +1044,7 @@
 
 #
 "Slight skew:"
-"Leicht.Schr:"
+"Etwas schraeg:"
 
 #MSG_SOUND
 "Sound"
@@ -1152,7 +1152,7 @@
 
 #
 "Total failures"
-"Gesamte Fehler"
+"Fehler Total"
 
 #
 "to load filament"

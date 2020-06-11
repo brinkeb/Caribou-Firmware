@@ -6,7 +6,6 @@
 #include "printers.h"
 /*------------------------------------
  GENERAL SETTINGS
-"test"
  *------------------------------------*/
 
 // Printer revision
@@ -506,6 +505,9 @@
 
 #define ASA_PREHEAT_HOTEND_TEMP 260
 #define ASA_PREHEAT_HPB_TEMP 105
+
+#define PC_PREHEAT_HOTEND_TEMP 275
+#define PC_PREHEAT_HPB_TEMP 110
 
 #define ABS_PREHEAT_HOTEND_TEMP 255
 #define ABS_PREHEAT_HPB_TEMP 100

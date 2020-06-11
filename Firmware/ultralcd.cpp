@@ -1009,6 +1009,7 @@ void lcd_status_screen()                          // NOT static due to using ins
 
 	if (lcd_draw_update)
 	{
+	#ifndef WEH002004_OLED //Refreshing the Status Screen is too noticible on OLED display
 		ReInitLCD++;
 		if (ReInitLCD == 30)
 		{
@@ -1020,7 +1021,7 @@ void lcd_status_screen()                          // NOT static due to using ins
 			if ((ReInitLCD % 10) == 0)
 				lcd_refresh_noclear(); //to maybe revive the LCD if static electricity killed it.
 		}
-
+	#endif
 		lcdui_print_status_screen();
 
 		if (farm_mode)
@@ -2040,6 +2041,7 @@ static void lcd_preheat_menu()
 //! | Main               |
 //! | Firmware:          |	c=18 r=1
 //! |  3.7.2.-2363       |	c=16 r=1
+//! |  955c88cf          |	c=16 r=1
 //! | prusa3d.com        |	MSG_PRUSA3D
 //! | forum.prusa3d.com  |	MSG_PRUSA3D_FORUM
 //! | howto.prusa3d.com  |	MSG_PRUSA3D_HOWTO
@@ -2141,6 +2143,7 @@ static void lcd_support_menu()
 
   MENU_ITEM_BACK_P(PSTR("Firmware:"));
   MENU_ITEM_BACK_P(PSTR(" " FW_VERSION_FULL));
+  MENU_ITEM_BACK_P(PSTR(" " FW_COMMIT_HASH));
 #if (FW_DEV_VERSION != FW_VERSION_GOLD) && (FW_DEV_VERSION != FW_VERSION_RC)
   MENU_ITEM_BACK_P(PSTR(" repo " FW_REPOSITORY));
 #endif
@@ -3510,12 +3513,21 @@ bool lcd_calibrate_z_end_stop_manual(bool only_z)
 calibrated:
     // Let the machine think the Z axis is a bit higher than it is, so it will not home into the bed
     // during the search for the induction points.
+#ifndef EXTRUDER_DESIGN_R3
 	if ((PRINTER_TYPE == PRINTER_MK25) || (PRINTER_TYPE == PRINTER_MK2) || (PRINTER_TYPE == PRINTER_MK2_SNMM)) {
 		current_position[Z_AXIS] = Z_MAX_POS-3.f;
 	}
 	else {
 		current_position[Z_AXIS] = Z_MAX_POS+4.f;
 	}
+#else
+	if ((PRINTER_TYPE == PRINTER_MK25S) || (PRINTER_TYPE == PRINTER_MK25) || (PRINTER_TYPE == PRINTER_MK2) || (PRINTER_TYPE == PRINTER_MK2_SNMM)) {
+		current_position[Z_AXIS] = Z_MAX_POS-3.f;
+	}
+	else {
+		current_position[Z_AXIS] = Z_MAX_POS+4.f;
+	}
+#endif
     plan_set_position_curposXYZE();
     return true;
 
@@ -7856,6 +7868,7 @@ static bool lcd_selfcheck_axis_sg(unsigned char axis) {
 	switch (axis) {
 	case 0: axis_length = X_MAX_POS; break;
 	case 1: axis_length = Y_MAX_POS + 8; break;
+	case 2: axis_length = Z_MAX_POS; break;
 	default: axis_length = 210; break;
 	}
 
@@ -8569,7 +8582,7 @@ static FanCheck lcd_selftest_fan_auto(int _fan)
 		printf_P(PSTR("Print fan speed: %d \n"), fan_speed[1]);
 		printf_P(PSTR("Extr fan speed: %d \n"), fan_speed[0]);
 
-		if (fan_speed[0] < 20) { // < 1200 RPM would mean either a faulty Noctua or Altfan
+		if (!fan_speed[0]) {
 			return FanCheck::ExtruderFan;
 		}
 #ifdef FAN_SOFT_PWM
