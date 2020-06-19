@@ -21,9 +21,6 @@
 // Printer name
 #define CUSTOM_MENDEL_NAME "Prusa i3 MK3S"
 
-// WEH002004 OLED Display uncomment WEH002004_OLED if have this kind of display
-//#define WEH002004_OLED
-
 // Electronics
 #define MOTHERBOARD BOARD_EINSY_1_0a
 #define STEEL_SHEET
@@ -38,15 +35,6 @@
 //#define E3D_PT100_EXTRUDER_NO_AMP
 //#define E3D_PT100_BED_WITH_AMP
 //#define E3D_PT100_BED_NO_AMP
-
-//Extruder Design R3 based printer, like Zaribo, Bear, Bondtech extruder
-//#define EXTRUDER_DESIGN_R3
-//#define BONDTECH_MK3S
-//#define BONDTECH_MOSQUITO
-//#define BONDTECH_M_MAGNUM
-
-// Uncomment the below for the Slice Engineering high temperature sensor
-//#define SLICE_HT_EXTRUDER
 
 
 /*------------------------------------
@@ -279,7 +267,7 @@
 //new settings is possible for vsense = 1, running current value > 31 set vsense to zero and shift both currents by 1 bit right (Z axis only)
 #define TMC2130_CURRENTS_H {16, 20, 35, 30}  // default holding currents for all axes
 #define TMC2130_CURRENTS_R {16, 20, 35, 30}  // default running currents for all axes
-#define TMC2130_CURRENTS_R_HOME {8, 10, 20, 18}  // homing running currents for all axes
+#define TMC2130_CURRENTS_R_HOME {12, 15, 20, 18}  // homing running currents for all axes
 // #define TMC2130_UNLOAD_CURRENT_R 12			 // lower current for M600 to protect filament sensor - Unused
 
 #define TMC2130_STEALTH_Z
@@ -308,11 +296,11 @@
 #if BED_MINTEMP_DELAY>USHRT_MAX
 #error "Check maximal allowed value @ ShortTimer (see BED_MINTEMP_DELAY definition)"
 #endif
+#define DETECT_SUPERPINDA
+#define PINDA_MINTEMP BED_MINTEMP
 
 // Maxtemps
 #if defined(E3D_PT100_EXTRUDER_WITH_AMP) || defined(E3D_PT100_EXTRUDER_NO_AMP)
-#define HEATER_0_MAXTEMP 410
-#elif defined (SLICE_HT_EXTRUDER)
 #define HEATER_0_MAXTEMP 410
 #else
 #define HEATER_0_MAXTEMP 305
@@ -326,10 +314,6 @@
 #define  DEFAULT_Kp 21.70
 #define  DEFAULT_Ki 1.60
 #define  DEFAULT_Kd 73.76
-#elif defined (SLICE_HT_EXTRUDER)
-#define  DEFAULT_Kp 29.09
-#define  DEFAULT_Ki 3.52
-#define  DEFAULT_Kd 60.04
 #else
 // Define PID constants for extruder
 //#define  DEFAULT_Kp 40.925
@@ -576,14 +560,11 @@
 // 148 is E3D Pt100 with 4k7 pullup and no PT100 Amplifier on a MiniRambo 1.3a
 // 247 is Pt100 with 4k7 pullup and PT100 Amplifier
 // 110 is Pt100 with 1k pullup (non standard)
-// 800 Slice Engineering 450c thermistors
 
 #if defined(E3D_PT100_EXTRUDER_WITH_AMP)
 #define TEMP_SENSOR_0 247
 #elif defined(E3D_PT100_EXTRUDER_NO_AMP)
 #define TEMP_SENSOR_0 148
-#elif defined(SLICE_HT_EXTRUDER)
-#define TEMP_SENSOR_0 800
 #else
 #define TEMP_SENSOR_0 5
 #endif

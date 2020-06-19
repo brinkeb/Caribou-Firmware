@@ -45,7 +45,6 @@ clean_lang de
 clean_lang es
 clean_lang fr
 clean_lang it
-clean_lang nl
 clean_lang pl
 
 echo -n "lang-clean.sh finished" >&2
