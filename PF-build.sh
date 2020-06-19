@@ -56,7 +56,7 @@
 #   Some may argue that this is only used by a script, BUT as soon someone accidentally or on purpose starts Arduino IDE
 #   it will use the default Arduino IDE folders and so can corrupt the build environment.
 #
-# Version: 1.0.6-Build_18
+# Version: 1.0.6-Build_40
 # Change log:
 # 12 Jan 2019, 3d-gussner, Fixed "compiler.c.elf.flags=-w -Os -Wl,-u,vfprintf -lprintf_flt -lm -Wl,--gc-sections" in 'platform.txt'
 # 16 Jan 2019, 3d-gussner, Build_2, Added development check to modify 'Configuration.h' to prevent unwanted LCD messages that Firmware is unknown
@@ -112,18 +112,31 @@
 #                          Changed Hex-files folder to PF-build-hex as requested in PR
 # 23 Jul 2019, 3d-gussner, Added Finding OS version routine so supporting new OS should get easier
 # 26 Jul 2019, 3d-gussner, Change JSON repository to prusa3d after PR https://github.com/prusa3d/Arduino_Boards/pull/1 was merged
+# 20 Sep 2019, 3d-gussner, Changing naming convention for Zaribo hex files
 # 23 Sep 2019, 3d-gussner, Prepare PF-build.sh for comming Prusa3d/Arduino_Boards version 1.0.2 Pull Request
+# 01 Oct 2019, 3d-gussner, Update script to new naming convention
 # 17 Oct 2019, 3d-gussner, Changed folder and check file names to have seperated build enviroments depening on Arduino IDE version and
 #                          board-versions.
 # 15 Dec 2019, 3d-gussner, Prepare for switch to Prusa3d/PF-build-env repository
 # 15 Dec 2019, 3d-gussner, Fix Audrino user preferences for the chosen board.
 # 17 Dec 2019, 3d-gussner, Fix "timer0_fract = 0" warning by using Arduino_boards v1.0.3
+# 07 Feb 2020, 3d-gussner, Added branding_Zaribo.sh and debranding_Zaribo.sh scripts to keep firmware as close as possible to origin
+#                          this should help with merge issues we had in the past.
+# 08 Feb 2019, 3d-gussner, Begin to add stock Prusa printers with OLED and with/without Bondtech
+#						   Still in progress.
+#                           - No branding
+#							- Change for stock Prusa R4/R5 Extruder
+# 17 Feb 2020, 3d-gussner, Add aarch64 beat support to compile on Odroid-C1/2 RPi4+ 
+# 21 Apr 2020, 3d-gussner, Update the FW_COMMIT number to current commit number
+#                          Add git hash to support LCD menu
 # 28 Apr 2020, 3d-gussner, Added RC3 detection
+# 03 May 2020, 3d-gussner, Set git commit verification message to timeout after 2 sec
 # 03 May 2020, deliopoulos, Accept all RCx as RC versions
 # 05 May 2020, 3d-gussner, Make a copy of `not_tran.txt`and `not_used.txt` as `not_tran_$VARIANT.txt`and `not_used_$VARIANT.txt`
 #                          After compiling All multilanguage vairants it makes it easier to find missing or unused transltions.
 # 12 May 2020, DRracer   , Cleanup double MK2/s MK25/s `not_tran` and `not_used` files
 # 13 May 2020, leptun    , If cleanup files do not exist don't try to.
+#
 #### Start check if OSTYPE is supported
 OS_FOUND=$( command -v uname)
 
@@ -163,6 +176,9 @@ elif [ $TARGET_OS == "linux" ]; then
 	elif [[ $(uname -m) == "i386" || $(uname -m) == "i686" ]]; then
 		echo "$(tput setaf 2)Linux 32-bit found$(tput sgr0)"
 		Processor="32"
+	elif [ $(uname -m) == "aarch64" ]; then
+		echo "$(tput setaf 2)Linux aarch64 bit found$(tput sgr0)"
+		Processor="aarch64"
 	else
 		echo "$(tput setaf 1)Unsupported OS: Linux $(uname -m)"
 		echo "Please refer to the notes of build.sh$(tput sgr0)"
@@ -220,7 +236,11 @@ fi
 
 
 #### Set build environment 
-ARDUINO_ENV="1.8.5"
+if [ $Processor == "aarch64" ]; then
+	ARDUINO_ENV="1.8.9" #Beta test on Odroid-C2
+else
+	ARDUINO_ENV="1.8.5"
+fi
 BUILD_ENV="1.0.6"
 BOARD="prusa_einsy_rambo"
 BOARD_PACKAGE_NAME="PrusaResearch"
@@ -234,6 +254,7 @@ BOARD_FILE_URL="https://raw.githubusercontent.com/prusa3d/Arduino_Boards/master/
 PF_BUILD_FILE_URL="https://github.com/prusa3d/PF-build-env/releases/download/$BUILD_ENV-WinLin/PF-build-env-WinLin-$BUILD_ENV.zip"
 LIB="PrusaLibrary"
 SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
+MULTI_LANGUAGE=("MULTI" "CZ" "DE" "ES" "FR" "IT" "NL" "PL")
 
 # List few useful data
 echo
@@ -422,13 +443,19 @@ fi
 #### Start 
 cd $SCRIPT_PATH
 
+# Get Commit_Hash
+GIT_COMMIT_HASH=$(git log --pretty=format:"%h" -1)
+
+# Get Commit_Number
+GIT_COMMIT_NUMBER=$(git rev-list HEAD --count)
+
 # First argument defines which variant of the Prusa Firmware will be compiled 
 if [ -z "$1" ] ; then
 	# Select which variant of the Prusa Firmware will be compiled, like
 	PS3="Select a variant: "
 	while IFS= read -r -d $'\0' f; do
 		options[i++]="$f"
-	done < <(find Firmware/variants/ -maxdepth 1 -type f -name "*.h" -print0 )
+	done < <(find Firmware/variants/ -maxdepth 1 -type f -name "*-???.h" -print0 )
 	select opt in "${options[@]}" "All" "Quit"; do
 		case $opt in
 			*.h)
@@ -528,6 +555,12 @@ do
 	FW=$(grep --max-count=1 "\bFW_VERSION\b" $SCRIPT_PATH/Firmware/Configuration.h | sed -e's/  */ /g'|cut -d '"' -f2|sed 's/\.//g')
 	# Find build version in Configuration.h file and use it to generate the hex filename
 	BUILD=$(grep --max-count=1 "\bFW_COMMIT_NR\b" $SCRIPT_PATH/Firmware/Configuration.h | sed -e's/  */ /g'|cut -d ' ' -f3)
+	if [ "$BUILD" == "$GIT_COMMIT_NUMBER" ] ; then
+		echo "FW_COMMIT in Configuration.h is identical to current git commit number"
+	else
+		echo "$(tput setaf 5)FW_COMMIT $BUILD in Configuration.h is DIFFERENT to current git commit number $GIT_COMMIT_NUMBER. To cancel this process press CRTL+C and update the FW_COMMIT value.$(tput sgr0)"
+		 read -t 2 -p "Press Enter to continue..."
+	fi
 	# Check if the motherboard is an EINSY and if so only one hex file will generated
 	MOTHERBOARD=$(grep --max-count=1 "\bMOTHERBOARD\b" $SCRIPT_PATH/Firmware/variants/$VARIANT.h | sed -e's/  */ /g' |cut -d ' ' -f3)
 	# Check development status
@@ -576,23 +609,29 @@ do
 	OUTPUT_FOLDER="PF-build-hex/FW$FW-Build$BUILD/$MOTHERBOARD"
 	
 	#Check if exactly the same hexfile already exists
-	if [[ -f "$SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT.hex"  &&  "$LANGUAGES" == "ALL" ]]; then
+	for i in "${MULTI_LANGUAGE[@]}"
+	do
+		MULTI_CHECK=$i
+		echo $MULTI_CHECK
+		if [[ -f "$SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-$MULTI_CHECK.hex"  &&  "$LANGUAGES" == "ALL" ]]; then
+			echo "$i"
+			ls -1 $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-$MULTI_CHECK.hex | xargs -n1 basename
+			echo "$(tput setaf 6)This hex file to be compiled already exists! To cancel this process press CRTL+C and rename existing hex file.$(tput sgr 0)"
+			read -t 10 -p "Press Enter to continue..."
+		fi
+	done
+	if [[ -f "$SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-EN.hex"  &&  "$LANGUAGES" == "EN_ONLY" ]]; then
 		echo ""
-		ls -1 $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT.hex | xargs -n1 basename
-		echo "$(tput setaf 6)This hex file to be compiled already exists! To cancel this process press CRTL+C and rename existing hex file.$(tput sgr 0)"
-		read -t 10 -p "Press Enter to continue..."
-	elif [[ -f "$SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-EN_ONLY.hex"  &&  "$LANGUAGES" == "EN_ONLY" ]]; then
-		echo ""
-		ls -1 $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-EN_ONLY.hex | xargs -n1 basename
+		ls -1 $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-EN.hex | xargs -n1 basename
 		echo "$(tput setaf 6)This hex file to be compiled already exists! To cancel this process press CRTL+C and rename existing hex file.$(tput sgr 0)"
 		read -t 10 -p "Press Enter to continue..."
 	fi
-	if [[ -f "$SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT.zip"  &&  "$LANGUAGES" == "ALL" ]]; then
-		echo ""
-		ls -1 $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT.zip | xargs -n1 basename
-		echo "$(tput setaf 6)This zip file to be compiled already exists! To cancel this process press CRTL+C and rename existing hex file.$(tput sgr 0)"
-		read -t 10 -p "Press Enter to continue..."
-	fi
+#	if [[ -f "$SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD.zip"  &&  "$LANGUAGES" == "ALL" ]]; then
+#		echo ""
+#		ls -1 $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT.zip | xargs -n1 basename
+#		echo "$(tput setaf 6)This zip file to be compiled already exists! To cancel this process press CRTL+C and rename existing hex file.$(tput sgr 0)"
+#		read -t 10 -p "Press Enter to continue..."
+#	fi
 	
 	#List some useful data
 	echo "$(tput setaf 2)$(tput setab 7) "
@@ -621,6 +660,14 @@ do
 	# set FW_REPOSITORY
 	sed -i -- 's/#define FW_REPOSITORY "Unknown"/#define FW_REPOSITORY "Prusa3d"/g' $SCRIPT_PATH/Firmware/Configuration.h
 
+	# set FW_COMMIT_HASH
+	#echo $GIT_COMMIT_HASH
+	sed -i -- "s/.*#define FW_COMMIT_HASH.*/#define FW_COMMIT_HASH \"${GIT_COMMIT_HASH}\"/g" $SCRIPT_PATH/Firmware/Configuration.h
+
+	# Branding
+	export SCRIPT_PATH=$SCRIPT_PATH
+	$SCRIPT_PATH/branding_Zaribo.sh
+	
 	#Prepare english only or multilanguage version to be build
 	if [ $LANGUAGES == "ALL" ]; then
 		echo " "
@@ -651,7 +698,7 @@ do
 
 	echo "Start to build Prusa Firmware ..."
 	echo "Using variant $VARIANT$(tput setaf 3)"
-	sleep 2
+	#sleep 2
 	#$BUILD_ENV_PATH/arduino-builder -dump-prefs -debug-level 10 -compile -hardware $ARDUINO/hardware -hardware $ARDUINO/portable/packages -tools $ARDUINO/tools-builder -tools $ARDUINO/hardware/tools/avr -tools $ARDUINO/portable/packages -built-in-libraries $ARDUINO/libraries -libraries $ARDUINO/portable/sketchbook/libraries -fqbn=$BOARD_PACKAGE_NAME:avr:$BOARD -build-path=$BUILD_PATH -warnings=all $SCRIPT_PATH/Firmware/Firmware.ino || exit 14
 	$BUILD_ENV_PATH/arduino-builder -compile -hardware $ARDUINO/hardware -hardware $ARDUINO/portable/packages -tools $ARDUINO/tools-builder -tools $ARDUINO/hardware/tools/avr -tools $ARDUINO/portable/packages -built-in-libraries $ARDUINO/libraries -libraries $ARDUINO/portable/sketchbook/libraries -fqbn=$BOARD_PACKAGE_NAME:avr:$BOARD -build-path=$BUILD_PATH -warnings=all $SCRIPT_PATH/Firmware/Firmware.ino || exit 14
 	echo "$(tput sgr 0)"
@@ -661,7 +708,7 @@ do
 
 		echo "Building multi language firmware" $MULTI_LANGUAGE_CHECK
 		echo "$(tput sgr 0)"
-		sleep 2
+		#sleep 2
 		cd $SCRIPT_PATH/lang
 		echo "$(tput setaf 3)"
 		./config.sh || exit 31
@@ -684,6 +731,7 @@ do
 			echo "$(tput sgr 0)"
 		fi
 		# build languages
+		#break
 		echo "$(tput setaf 3)"
 		./lang-build.sh || exit 32
 		# Combine compiled firmware with languages 
@@ -696,21 +744,22 @@ do
 		# If the motherboard is an EINSY just copy one hexfile
 		if [ "$MOTHERBOARD" = "BOARD_EINSY_1_0a" ]; then
 			echo "$(tput setaf 2)Copying multi language firmware for MK3/Einsy board to PF-build-hex folder$(tput sgr 0)"
-			cp -f firmware.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT.hex
+			cp -f firmware.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-MULTI.hex
 		else
 			echo "$(tput setaf 2)Zip multi language firmware for MK2.5/miniRAMbo board to PF-build-hex folder$(tput sgr 0)"
-			cp -f firmware_cz.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-cz.hex
-			cp -f firmware_de.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-de.hex
-			cp -f firmware_es.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-es.hex
-			cp -f firmware_fr.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-fr.hex
-			cp -f firmware_it.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-it.hex
-			cp -f firmware_pl.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-pl.hex
-			if [ $TARGET_OS == "windows" ]; then 
-				zip a $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT.zip $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-??.hex
-				rm $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-??.hex
-			elif [ $TARGET_OS == "linux" ]; then
-				zip -m -j ../../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT.zip ../../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-??.hex
-			fi
+			cp -f firmware_cz.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-CZ.hex
+			cp -f firmware_de.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-DE.hex
+			cp -f firmware_es.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-ES.hex
+			cp -f firmware_fr.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-FR.hex
+			cp -f firmware_it.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-IT.hex
+			cp -f firmware_nl.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-NL.hex
+			cp -f firmware_pl.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-PL.hex
+#			if [ $TARGET_OS == "windows" ]; then 
+#				zip a $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT.zip $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-??.hex
+#				rm $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-??.hex
+#			elif [ $TARGET_OS == "linux" ]; then
+#				zip -m -j ../../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT.zip ../../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-??.hex
+#			fi
 		fi
 		# Cleanup after build
 		echo "$(tput setaf 3)"
@@ -719,7 +768,7 @@ do
 		echo "$(tput sgr 0)"
 	else
 		echo "$(tput setaf 2)Copying English only firmware to PF-build-hex folder$(tput sgr 0)"
-		cp -f $BUILD_PATH/Firmware.ino.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-Build$BUILD-$VARIANT-EN_ONLY.hex || exit 34
+		cp -f $BUILD_PATH/Firmware.ino.hex $SCRIPT_PATH/../$OUTPUT_FOLDER/FW$FW-$VARIANT-Build$BUILD-EN.hex || exit 34
 	fi
 
 	# Cleanup Firmware
@@ -742,11 +791,14 @@ do
 	fi
 	sed -i -- "s/^#define FW_DEV_VERSION FW_VERSION_$DEV_STATUS/#define FW_DEV_VERSION FW_VERSION_UNKNOWN/g" $SCRIPT_PATH/Firmware/Configuration.h
 	sed -i -- 's/^#define FW_REPOSITORY "Prusa3d"/#define FW_REPOSITORY "Unknown"/g' $SCRIPT_PATH/Firmware/Configuration.h
+	sed -i -- "s/.*#define FW_COMMIT_HASH.*/#define FW_COMMIT_HASH \"\"/g" $SCRIPT_PATH/Firmware/Configuration.h
 	echo $MULTI_LANGUAGE_CHECK
 	#sed -i -- "s/^#define LANG_MODE * /#define LANG_MODE              $MULTI_LANGUAGE_CHECK/g" $SCRIPT_PATH/Firmware/config.h
-	sed -i -- "s/^#define LANG_MODE *1/#define LANG_MODE              ${MULTI_LANGUAGE_CHECK}/g" $SCRIPT_PATH/Firmware/config.h
-	sed -i -- "s/^#define LANG_MODE *0/#define LANG_MODE              ${MULTI_LANGUAGE_CHECK}/g" $SCRIPT_PATH/Firmware/config.h
-	sleep 5
+	#sed -i -- "s/^#define LANG_MODE *1/#define LANG_MODE              ${MULTI_LANGUAGE_CHECK}/g" $SCRIPT_PATH/Firmware/config.h
+	sed -i -- "s/^#define LANG_MODE *0/#define LANG_MODE              1/g" $SCRIPT_PATH/Firmware/config.h
+	#sleep 5
+	# debranding
+	$SCRIPT_PATH/debranding_Zaribo.sh
 done
 
 # Switch to hex path and list build files
