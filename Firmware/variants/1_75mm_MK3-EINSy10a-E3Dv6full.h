@@ -22,16 +22,11 @@
 // Printer name
 #define CUSTOM_MENDEL_NAME "Prusa i3 MK3"
 
-//Exrtuder Design R3 based printer, like Zaribo, Bear, Bondtech extruder
-//#define EXTRUDER_DESIGN_R3
-
-// WEH002004 OLED Display uncomment WEH002004_OLED if have this kind of display
-//#define WEH002004_OLED
-
 // Electronics
 #define MOTHERBOARD BOARD_EINSY_1_0a
 #define STEEL_SHEET
 #define HAS_SECOND_SERIAL_PORT
+
 
 // Uncomment the below for the E3D PT100 temperature sensor (with or without PT100 Amplifier)
 //#define E3D_PT100_EXTRUDER_WITH_AMP
@@ -39,11 +34,6 @@
 //#define E3D_PT100_BED_WITH_AMP
 //#define E3D_PT100_BED_NO_AMP
 
-//Extruder Design R3 based printer, like Zaribo, Bear, Bondtech extruder
-//#define EXTRUDER_DESIGN_R3
-//#define BONDTECH_MK3S
-//#define BONDTECH_MOSQUITO
-//#define BONDTECH_M_MAGNUM
 
 /*------------------------------------
  AXIS SETTINGS
@@ -275,7 +265,7 @@
 //new settings is possible for vsense = 1, running current value > 31 set vsense to zero and shift both currents by 1 bit right (Z axis only)
 #define TMC2130_CURRENTS_H {16, 20, 35, 30}  // default holding currents for all axes
 #define TMC2130_CURRENTS_R {16, 20, 35, 30}  // default running currents for all axes
-#define TMC2130_CURRENTS_R_HOME {8, 10, 20, 18}  // homing running currents for all axes
+#define TMC2130_CURRENTS_R_HOME {12, 15, 20, 18}  // homing running currents for all axes
 // #define TMC2130_UNLOAD_CURRENT_R 12			 // lower current for M600 to protect filament sensor - Unused
 
 #define TMC2130_STEALTH_Z
@@ -304,6 +294,8 @@
 #if BED_MINTEMP_DELAY>USHRT_MAX
 #error "Check maximal allowed value @ ShortTimer (see BED_MINTEMP_DELAY definition)"
 #endif
+#define DETECT_SUPERPINDA
+#define PINDA_MINTEMP BED_MINTEMP
 
 // Maxtemps
 #if defined(E3D_PT100_EXTRUDER_WITH_AMP) || defined(E3D_PT100_EXTRUDER_NO_AMP)
