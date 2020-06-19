@@ -1009,6 +1009,7 @@ void lcd_status_screen()                          // NOT static due to using ins
 
 	if (lcd_draw_update)
 	{
+	#ifndef WEH002004_OLED //Refreshing the Status Screen is too noticible on OLED display
 		ReInitLCD++;
 		if (ReInitLCD == 30)
 		{
@@ -1020,7 +1021,7 @@ void lcd_status_screen()                          // NOT static due to using ins
 			if ((ReInitLCD % 10) == 0)
 				lcd_refresh_noclear(); //to maybe revive the LCD if static electricity killed it.
 		}
-
+	#endif
 		lcdui_print_status_screen();
 
 		if (farm_mode)
@@ -2040,6 +2041,7 @@ static void lcd_preheat_menu()
 //! | Main               |
 //! | Firmware:          |	c=18 r=1
 //! |  3.7.2.-2363       |	c=16 r=1
+//! |  955c88cf          |	c=16 r=1
 //! | prusa3d.com        |	MSG_PRUSA3D
 //! | forum.prusa3d.com  |	MSG_PRUSA3D_FORUM
 //! | howto.prusa3d.com  |	MSG_PRUSA3D_HOWTO
@@ -2141,6 +2143,7 @@ static void lcd_support_menu()
 
   MENU_ITEM_BACK_P(PSTR("Firmware:"));
   MENU_ITEM_BACK_P(PSTR(" " FW_VERSION_FULL));
+  MENU_ITEM_BACK_P(PSTR(" " FW_COMMIT_HASH));
 #if (FW_DEV_VERSION != FW_VERSION_GOLD) && (FW_DEV_VERSION != FW_VERSION_RC)
   MENU_ITEM_BACK_P(PSTR(" repo " FW_REPOSITORY));
 #endif
@@ -3510,12 +3513,21 @@ bool lcd_calibrate_z_end_stop_manual(bool only_z)
 calibrated:
     // Let the machine think the Z axis is a bit higher than it is, so it will not home into the bed
     // during the search for the induction points.
+#ifndef EXTRUDER_DESIGN_R3
 	if ((PRINTER_TYPE == PRINTER_MK25) || (PRINTER_TYPE == PRINTER_MK2) || (PRINTER_TYPE == PRINTER_MK2_SNMM)) {
 		current_position[Z_AXIS] = Z_MAX_POS-3.f;
 	}
 	else {
 		current_position[Z_AXIS] = Z_MAX_POS+4.f;
 	}
+#else
+	if ((PRINTER_TYPE == PRINTER_MK25S) || (PRINTER_TYPE == PRINTER_MK25) || (PRINTER_TYPE == PRINTER_MK2) || (PRINTER_TYPE == PRINTER_MK2_SNMM)) {
+		current_position[Z_AXIS] = Z_MAX_POS-3.f;
+	}
+	else {
+		current_position[Z_AXIS] = Z_MAX_POS+4.f;
+	}
+#endif
     plan_set_position_curposXYZE();
     return true;
 
@@ -3920,12 +3932,14 @@ void lcd_temp_cal_show_result(bool result) {
 		eeprom_update_byte((uint8_t*)EEPROM_CALIBRATION_STATUS_PINDA, 1);
 		SERIAL_ECHOLNPGM("Temperature calibration done. Continue with pressing the knob.");
 		lcd_show_fullscreen_message_and_wait_P(_T(MSG_TEMP_CALIBRATION_DONE));
+		temp_cal_active = true;
 		eeprom_update_byte((unsigned char *)EEPROM_TEMP_CAL_ACTIVE, 1);
 	}
 	else {
 		eeprom_update_byte((uint8_t*)EEPROM_CALIBRATION_STATUS_PINDA, 0);
 		SERIAL_ECHOLNPGM("Temperature calibration failed. Continue with pressing the knob.");
 		lcd_show_fullscreen_message_and_wait_P(_i("Temperature calibration failed"));////MSG_TEMP_CAL_FAILED c=20 r=8
+		temp_cal_active = false;
 		eeprom_update_byte((unsigned char *)EEPROM_TEMP_CAL_ACTIVE, 0);
 	}
 	lcd_update_enable(true);
@@ -4633,9 +4647,9 @@ void lcd_pinda_calibration_menu()
 }
 
 void lcd_temp_calibration_set() {
-	bool temp_cal_active = eeprom_read_byte((unsigned char *)EEPROM_TEMP_CAL_ACTIVE);
 	temp_cal_active = !temp_cal_active;
 	eeprom_update_byte((unsigned char *)EEPROM_TEMP_CAL_ACTIVE, temp_cal_active);
+	st_current_init();
 }
 
 #ifdef HAS_SECOND_SERIAL_PORT
@@ -5600,7 +5614,6 @@ do\
 }\
 while (0)
 
-#if 0 // temporarily unused
 static void lcd_check_gcode_set(void)
 {
 switch(oCheckGcode)
@@ -5619,7 +5632,6 @@ switch(oCheckGcode)
      }
 eeprom_update_byte((uint8_t*)EEPROM_CHECK_GCODE,(uint8_t)oCheckGcode);
 }
-#endif
 
 #define SETTINGS_GCODE \
 do\
@@ -5763,10 +5775,8 @@ static void lcd_settings_menu()
 #if defined (TMC2130) && defined (LINEARITY_CORRECTION)
     MENU_ITEM_SUBMENU_P(_i("Lin. correction"), lcd_settings_linearity_correction_menu);
 #endif //LINEARITY_CORRECTION && TMC2130
-    if(has_temperature_compensation())
-    {
-	    MENU_ITEM_TOGGLE_P(_T(MSG_TEMP_CALIBRATION), eeprom_read_byte((unsigned char *)EEPROM_TEMP_CAL_ACTIVE) ? _T(MSG_ON) : _T(MSG_OFF), lcd_temp_calibration_set);
-    }
+
+	MENU_ITEM_TOGGLE_P(_T(MSG_TEMP_CALIBRATION), temp_cal_active ? _T(MSG_ON) : _T(MSG_OFF), lcd_temp_calibration_set);
 
 #ifdef HAS_SECOND_SERIAL_PORT
     MENU_ITEM_TOGGLE_P(_T(MSG_RPI_PORT), (selectedSerialPort == 0) ? _T(MSG_OFF) : _T(MSG_ON), lcd_second_serial_set);
@@ -5870,10 +5880,7 @@ static void lcd_calibration_menu()
 	//MENU_ITEM_FUNCTION_P(MSG_RESET_CALIBRATE_E, lcd_extr_cal_reset);
 #endif
 #ifndef MK1BP
-    if(has_temperature_compensation())
-    {
-	    MENU_ITEM_SUBMENU_P(_i("Temp. calibration"), lcd_pinda_calibration_menu);////MSG_CALIBRATION_PINDA_MENU c=17 r=1
-    }
+	MENU_ITEM_SUBMENU_P(_i("Temp. calibration"), lcd_pinda_calibration_menu);////MSG_CALIBRATION_PINDA_MENU c=17 r=1
 #endif //MK1BP
   }
   
@@ -7861,6 +7868,7 @@ static bool lcd_selfcheck_axis_sg(unsigned char axis) {
 	switch (axis) {
 	case 0: axis_length = X_MAX_POS; break;
 	case 1: axis_length = Y_MAX_POS + 8; break;
+	case 2: axis_length = Z_MAX_POS; break;
 	default: axis_length = 210; break;
 	}
 
@@ -8574,7 +8582,7 @@ static FanCheck lcd_selftest_fan_auto(int _fan)
 		printf_P(PSTR("Print fan speed: %d \n"), fan_speed[1]);
 		printf_P(PSTR("Extr fan speed: %d \n"), fan_speed[0]);
 
-		if (fan_speed[0] < 20) { // < 1200 RPM would mean either a faulty Noctua or Altfan
+		if (!fan_speed[0]) {
 			return FanCheck::ExtruderFan;
 		}
 #ifdef FAN_SOFT_PWM
