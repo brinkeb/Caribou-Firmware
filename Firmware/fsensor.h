@@ -6,16 +6,15 @@
 #include "config.h"
 
 
+//! minimum meassured chunk length in steps
+extern int16_t fsensor_chunk_len;
 // enable/disable flag
 extern bool fsensor_enabled;
 // not responding flag
 extern bool fsensor_not_responding;
-#ifdef PAT9125
-// optical checking "chunk lenght" (already in steps)
-extern int16_t fsensor_chunk_len;
-// count of soft failures
-extern uint8_t fsensor_softfail;
-#endif
+//enable/disable quality meassurement
+extern bool fsensor_oq_meassure_enabled;
+
 
 //! @name save restore printing
 //! @{
@@ -28,11 +27,6 @@ extern void fsensor_checkpoint_print(void);
 
 //! initialize
 extern void fsensor_init(void);
-
-#ifdef PAT9125
-//! update axis resolution
-extern void fsensor_set_axis_steps_per_unit(float u);
-#endif
 
 //! @name enable/disable
 //! @{
@@ -58,10 +52,8 @@ extern void fsensor_autoload_check_stop(void);
 extern bool fsensor_check_autoload(void);
 //! @}
 
-#ifdef PAT9125
 //! @name optical quality measurement support
 //! @{
-extern bool fsensor_oq_meassure_enabled;
 extern void fsensor_oq_meassure_set(bool State);
 extern void fsensor_oq_meassure_start(uint8_t skip);
 extern void fsensor_oq_meassure_stop(void);
@@ -72,25 +64,21 @@ extern bool fsensor_oq_result(void);
 //! @{
 extern void fsensor_st_block_chunk(int cnt);
 
-// debugging
-extern uint8_t fsensor_log;
-
 // There's really nothing to do in block_begin: the stepper ISR likely has
 // called us already at the end of the last block, making this integration
 // redundant. LA1.5 might not always do that during a coasting move, so attempt
 // to drain fsensor_st_cnt anyway at the beginning of the new block.
 #define fsensor_st_block_begin(rev) fsensor_st_block_chunk(0)
 //! @}
-#endif //PAT9125
 
 
-#ifdef IR_SENSOR_ANALOG
+#if IR_SENSOR_ANALOG
 #define IR_SENSOR_STEADY 10                       // [ms]
 
 enum class ClFsensorPCB:uint_least8_t
 {
     _Old=0,
-    _Rev04=1,
+    _Rev03b=1,
     _Undef=EEPROM_EMPTY_VALUE
 };
 
