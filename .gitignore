@@ -4,11 +4,10 @@
 .vscode/launch.json
 .vscode/ipch
 
-
-.settings	.pio
-.project	.vscode/.browse.c_cpp.db*
-.cproject	.vscode/c_cpp_properties.json
-Debug	.vscode/launch.json
+.settings	
+.project	
+.cproject	
+Debug
 src/Configuration_prusa.h	.vscode/ipch
 src/Doc	
 /html	
