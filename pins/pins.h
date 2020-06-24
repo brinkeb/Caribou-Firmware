@@ -23,6 +23,7 @@
 
 
 
+
 /*
 *
 *
@@ -30,7 +31,8 @@
 *
 */
 
-#if MOTHERBOARD == BTT_SKR_MINI_E3_1_2
+
+#if MOTHERBOARD == BTT_SKR_MINI_E3_1_2 //111
 #include "pins_btt_skr_mini_e3_1_2.h"
 #endif 
 

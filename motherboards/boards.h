@@ -15,7 +15,7 @@
 *
 */
 
-#define BTT_SKR_MINI_E3_1_2  //Numbers arent needed
+#define BTT_SKR_MINI_E3_1_2  111 //Numbers are needed
 
 
 
