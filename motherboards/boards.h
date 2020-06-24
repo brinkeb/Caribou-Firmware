@@ -8,6 +8,24 @@
 
 #define BOARD_EINSY_1_0a        310  // EINSy 1.0a     - 310 (new)
 
+/*
+*
+*   Community Boards
+*
+*
+*/
+
+#define BTT_SKR_MINI_E3_1_2  //Numbers arent needed
+
+
+
+
+
+
+
+
+
+
 #define MB(board) (MOTHERBOARD==BOARD_##board)
 #define IS_RAMPS (MB(RAMPS_OLD) || MB(RAMPS_13_EFB) || MB(RAMPS_13_EEB) || MB(RAMPS_13_EFF) || MB(RAMPS_13_EEF))
 
