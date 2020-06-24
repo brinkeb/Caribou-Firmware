@@ -82,26 +82,26 @@ install:
     - platformio update
 
 script:
-  - cp Configuration/Prusa_Configs/1_75mm_MK3S-EINSy10a-E3Dv6full.h Firmware/Configuration_prusa.h
+  - cp Configuration/Prusa_Configs/1_75mm_MK3S-EINSy10a-E3Dv6full.h Configuration/Configuration_prusa.h
   - platformio run || { echo "1_75mm_MK3S-EINSy10a-E3Dv6full variant failed" && false; }
-  - rm Firmware/Configuration_prusa.h
-  - cp Configuration/Prusa_Configs/1_75mm_MK3-EINSy10a-E3Dv6full.h Firmware/Configuration_prusa.h
+  - rm Configuration/Configuration_prusa.h
+  - cp Configuration/Prusa_Configs/1_75mm_MK3-EINSy10a-E3Dv6full.h Configuration/Configuration_prusa.h
   - platformio run || { echo "1_75mm_MK3-EINSy10a-E3Dv6full variant failed" && false; }
-  - rm Firmware/Configuration_prusa.h
-  - cp Configuration/Prusa_Configs/1_75mm_MK25S-RAMBo13a-E3Dv6full.h Firmware/Configuration_prusa.h
+  - rm Configuration/Configuration_prusa.h
+  - cp Configuration/Prusa_Configs/1_75mm_MK25S-RAMBo13a-E3Dv6full.h Configuration/Configuration_prusa.h
   - platformio run || { echo "1_75mm_MK25S-RAMBo13a-E3Dv6full variant failed" && false; }
-  - rm Firmware/Configuration_prusa.h
-  - cp Configuration/Prusa_Configs/1_75mm_MK25S-RAMBo10a-E3Dv6full.h Firmware/Configuration_prusa.h
+  - rm Configuration/Configuration_prusa.h
+  - cp Configuration/Prusa_Configs/1_75mm_MK25S-RAMBo10a-E3Dv6full.h Configuration/Configuration_prusa.h
   - platformio run || { echo "1_75mm_MK25S-RAMBo10a-E3Dv6full variant failed" && false; }
-  - rm Firmware/Configuration_prusa.h
-  - cp Configuration/Prusa_Configs/1_75mm_MK25-RAMBo13a-E3Dv6full.h Firmware/Configuration_prusa.h
+  - rm Configuration/Configuration_prusa.h
+  - cp Configuration/Prusa_Configs/1_75mm_MK25-RAMBo13a-E3Dv6full.h Configuration/Configuration_prusa.h
   - platformio run || { echo "1_75mm_MK25-RAMBo13a-E3Dv6full variant failed" && false; }
-  - rm Firmware/Configuration_prusa.h
-  - cp Configuration/Prusa_Configs/1_75mm_MK25-RAMBo10a-E3Dv6full.h Firmware/Configuration_prusa.h
+  - rm Configuration/Configuration_prusa.h
+  - cp Configuration/Prusa_Configs/1_75mm_MK25-RAMBo10a-E3Dv6full.h Configuration/Configuration_prusa.h
   - platformio run || { echo "1_75mm_MK25-RAMBo10a-E3Dv6full variant failed" && false; }
-  - rm Firmware/Configuration_prusa.h
-  - cp Configuration/Prusa_Configs/1_75mm_MK2-RAMBo13a-E3Dv6full.h Firmware/Configuration_prusa.h
+  - rm Configuration/Configuration_prusa.h
+  - cp Configuration/Prusa_Configs/1_75mm_MK2-RAMBo13a-E3Dv6full.h Configuration/Configuration_prusa.h
   - platformio run || { echo "1_75mm_MK2-RAMBo13a-E3Dv6full variant failed" && false; }
-  - rm Firmware/Configuration_prusa.h
-  - cp Configuration/Prusa_Configs/1_75mm_MK2-RAMBo10a-E3Dv6full.h Firmware/Configuration_prusa.h
+  - rm Configuration/Configuration_prusa.h
+  - cp Configuration/Prusa_Configs/1_75mm_MK2-RAMBo10a-E3Dv6full.h Configuration/Configuration_prusa.h
   - platformio run || { echo "1_75mm_MK2-RAMBo10a-E3Dv6full variant failed" && false; }
