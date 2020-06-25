@@ -2,14 +2,27 @@
 * Rambo mini 1.0 Pin Assignments
 ******************************************************************/
 
-#define ELECTRONICS "RAMBo10a"
+#define ELECTRONICS "btt_skr_mini_e3_1_2"
 
 #define KNOWN_BOARD
 #ifndef __AVR_ATmega2560__
   #error Oops!  Make sure you have 'Arduino Mega 2560 or Rambo' selected from the 'Tools -> Boards' menu.
 #endif
 
-#define PINDA_THERMISTOR
+
+
+
+//Probes
+/*
+*
+*Define the probes here
+*Currently only supports P.i.n.d.a.
+*TBD: Add support for BLTouch
+*/
+//#define PINDA_THERMISTOR
+
+
+
 
 #define SWI2C_SDA      20 //SDA on P3
 #define SWI2C_SCL      84 //PH2 on P3, sensor cable must be rewired
@@ -40,8 +53,20 @@
 #define Z_MS1_PIN              68
 #define Z_MS2_PIN              67
 
+
+/*
+*
+*Define the Pins for the bed
+*
+*/
 #define HEATER_BED_PIN          4 //PG5
 #define TEMP_BED_PIN            2 //A2
+
+/*
+*
+*Define the Pins for Extruder 1
+*
+*/
 
 #define HEATER_0_PIN            3 //PE5
 #define TEMP_0_PIN              0 //A0
