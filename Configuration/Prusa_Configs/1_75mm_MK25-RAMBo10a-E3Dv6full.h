@@ -21,11 +21,8 @@
 // Printer name
 #define CUSTOM_MENDEL_NAME "Prusa i3 MK2.5"
 
-//Exrtuder Design R3 based printer, like Zaribo, Bear, Bondtech extruder
-//#define EXTRUDER_DESIGN_R3
-
 // Electronics
-#define MOTHERBOARD BOARD_RAMBO_MINI_1_3
+#define MOTHERBOARD BOARD_RAMBO_MINI_1_0
 
 #define HEATBED_V2
 #define STEEL_SHEET
@@ -96,7 +93,6 @@
 #define DEFAULT_MAX_FEEDRATE_SILENT         {172, 172, 12, 120}      // (mm/sec)   max feedrate (M203), silent mode
 #define DEFAULT_MAX_ACCELERATION      {1000, 1000, 200, 5000}  // (mm/sec^2) max acceleration (M201)
 #define DEFAULT_MAX_ACCELERATION_SILENT     {960, 960, 200, 5000}    // (mm/sec^2) max acceleration (M201), silent mode
-
 
 #define DEFAULT_ACCELERATION          1250   // X, Y, Z and E max acceleration in mm/s^2 for printing moves (M204S)
 #define DEFAULT_RETRACT_ACCELERATION  1250   // X, Y, Z and E max acceleration in mm/s^2 for retracts (M204T)
@@ -388,6 +384,9 @@
 #define ASA_PREHEAT_HOTEND_TEMP 260
 #define ASA_PREHEAT_HPB_TEMP 105
 
+#define PC_PREHEAT_HOTEND_TEMP 275
+#define PC_PREHEAT_HPB_TEMP 105
+
 #define ABS_PREHEAT_HOTEND_TEMP 255
 #define ABS_PREHEAT_HPB_TEMP 100
 
@@ -511,8 +510,5 @@
 #define MMU_HAS_CUTTER
 
 #define MMU_IDLER_SENSOR_ATTEMPTS_NR 21 //max. number of attempts to load filament if first load failed; value for max bowden length and case when loading fails right at the beginning
-
-//#define HEATBED_ANALYSIS //for meash bed leveling and heatbed analysis D-codes D80 and D81
-//#define MICROMETER_LOGGING //related to D-codes D80 and D81, currently works on MK2.5 only (MK3 board pin definitions missing)
 
 #endif //__CONFIGURATION_PRUSA_H

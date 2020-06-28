@@ -21,6 +21,29 @@
 #include "pins_Einsy_1_0.h"
 #endif //MOTHERBOARD == BOARD_EINSY_1_0a
 
+
+
+
+/*
+*
+*
+*   Community Boards
+*
+*/
+
+
+#if MOTHERBOARD == BTT_SKR_MINI_E3_1_2 //111
+#include "pins_btt_skr_mini_e3_1_2.h"
+#endif 
+
+
+
+
+
+
+
+
+
 #ifndef KNOWN_BOARD
 #error Unknown MOTHERBOARD value in configuration.h
 #endif
