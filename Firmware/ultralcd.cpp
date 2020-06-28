@@ -2169,7 +2169,18 @@ static void lcd_support_menu()
 #ifdef IR_SENSOR_ANALOG
   MENU_ITEM_BACK_P(STR_SEPARATOR);
   MENU_ITEM_BACK_P(PSTR("Fil. sensor v.:"));
-  MENU_ITEM_BACK_P(FsensorIRVersionText());
+  switch(oFsensorPCB)
+       {
+       case ClFsensorPCB::_Old:
+            MENU_ITEM_BACK_P(_T(MSG_03_OR_OLDER));
+            break;
+       case ClFsensorPCB::_Rev04:
+            MENU_ITEM_BACK_P(_T(MSG_04_OR_NEWER));
+            break;
+       case ClFsensorPCB::_Undef:
+       default:
+            MENU_ITEM_BACK_P(PSTR(" unknown state"));
+       }
 #endif // IR_SENSOR_ANALOG
 
 	MENU_ITEM_BACK_P(STR_SEPARATOR);
@@ -2499,12 +2510,6 @@ static void mFilamentItem_ASA()
     mFilamentItem(ASA_PREHEAT_HOTEND_TEMP, ASA_PREHEAT_HPB_TEMP);
 }
 
-static void mFilamentItem_PC()
-{
-    bFilamentPreheatState = false;
-    mFilamentItem(PC_PREHEAT_HOTEND_TEMP, PC_PREHEAT_HPB_TEMP);
-}
-
 static void mFilamentItem_ABS()
 {
     bFilamentPreheatState = false;
@@ -2564,7 +2569,6 @@ void lcd_generic_preheat_menu()
         MENU_ITEM_SUBMENU_P(PSTR("PLA  -  " STRINGIFY(PLA_PREHEAT_HOTEND_TEMP) "/" STRINGIFY(PLA_PREHEAT_HPB_TEMP)),mFilamentItem_PLA);
         MENU_ITEM_SUBMENU_P(PSTR("PET  -  " STRINGIFY(PET_PREHEAT_HOTEND_TEMP) "/" STRINGIFY(PET_PREHEAT_HPB_TEMP)),mFilamentItem_PET);
         MENU_ITEM_SUBMENU_P(PSTR("ASA  -  " STRINGIFY(ASA_PREHEAT_HOTEND_TEMP) "/" STRINGIFY(ASA_PREHEAT_HPB_TEMP)),mFilamentItem_ASA);
-        MENU_ITEM_SUBMENU_P(PSTR("PC   -  " STRINGIFY(PC_PREHEAT_HOTEND_TEMP) "/" STRINGIFY(PC_PREHEAT_HPB_TEMP)),mFilamentItem_PC);
         MENU_ITEM_SUBMENU_P(PSTR("ABS  -  " STRINGIFY(ABS_PREHEAT_HOTEND_TEMP) "/" STRINGIFY(ABS_PREHEAT_HPB_TEMP)),mFilamentItem_ABS);
         MENU_ITEM_SUBMENU_P(PSTR("HIPS -  " STRINGIFY(HIPS_PREHEAT_HOTEND_TEMP) "/" STRINGIFY(HIPS_PREHEAT_HPB_TEMP)),mFilamentItem_HIPS);
         MENU_ITEM_SUBMENU_P(PSTR("PP   -  " STRINGIFY(PP_PREHEAT_HOTEND_TEMP) "/" STRINGIFY(PP_PREHEAT_HPB_TEMP)),mFilamentItem_PP);
@@ -2918,7 +2922,7 @@ static void _lcd_move(const char *name, int axis, int min, int max)
 			if (max_software_endstops && current_position[axis] > max) current_position[axis] = max;
 			lcd_encoder = 0;
 			world2machine_clamp(current_position[X_AXIS], current_position[Y_AXIS]);
-			plan_buffer_line_curposXYZE(manual_feedrate[axis] / 60);
+			plan_buffer_line_curposXYZE(manual_feedrate[axis] / 60, active_extruder);
 			lcd_draw_update = 1;
 		}
 	}
@@ -2943,7 +2947,7 @@ static void lcd_move_e()
 			{
 				current_position[E_AXIS] += float((int)lcd_encoder) * move_menu_scale;
 				lcd_encoder = 0;
-				plan_buffer_line_curposXYZE(manual_feedrate[E_AXIS] / 60);
+				plan_buffer_line_curposXYZE(manual_feedrate[E_AXIS] / 60, active_extruder);
 				lcd_draw_update = 1;
 			}
 		}
@@ -3461,7 +3465,7 @@ bool lcd_calibrate_z_end_stop_manual(bool only_z)
 {
     // Don't know where we are. Let's claim we are Z=0, so the soft end stops will not be triggered when moving up.
     current_position[Z_AXIS] = 0;
-    plan_set_position_curposXYZE();
+    plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
 
     // Until confirmed by the confirmation dialog.
     for (;;) {
@@ -3483,7 +3487,7 @@ bool lcd_calibrate_z_end_stop_manual(bool only_z)
                     // Only move up, whatever direction the user rotates the encoder.
                     current_position[Z_AXIS] += fabs(lcd_encoder);
                     lcd_encoder = 0;
-                    plan_buffer_line_curposXYZE(manual_feedrate[Z_AXIS] / 60);
+                    plan_buffer_line_curposXYZE(manual_feedrate[Z_AXIS] / 60, active_extruder);
                 }
             }
             if (lcd_clicked()) {
@@ -4044,7 +4048,7 @@ void prusa_statistics_err(char c){
 }
 
 static void prusa_statistics_case0(uint8_t statnr){
-	SERIAL_ECHO('{');
+	SERIAL_ECHO("{");
 	prusa_stat_printerstatus(statnr);
 	prusa_stat_farm_number();
 	prusa_stat_printinfo();
@@ -4072,7 +4076,7 @@ void prusa_statistics(int _message, uint8_t _fil_nr) {
 		}
 		else
 		{
-			SERIAL_ECHO('{');
+			SERIAL_ECHO("{");
 			prusa_stat_printerstatus(1);
 			prusa_stat_farm_number();
 			prusa_stat_diameter();
@@ -4905,7 +4909,7 @@ void lcd_language()
 static void wait_preheat()
 {
     current_position[Z_AXIS] = 100; //move in z axis to make space for loading filament
-    plan_buffer_line_curposXYZE(homing_feedrate[Z_AXIS] / 60);
+    plan_buffer_line_curposXYZE(homing_feedrate[Z_AXIS] / 60, active_extruder);
     delay_keep_alive(2000);
     lcd_display_message_fullscreen_P(_T(MSG_WIZARD_HEATING));
 	lcd_set_custom_characters();
@@ -5733,9 +5737,7 @@ void lcd_hw_setup_menu(void)                      // can not be "static"
 
 #ifdef IR_SENSOR_ANALOG
     FSENSOR_ACTION_NA;
-    //! Fsensor Detection isn't ready for mmu yet it is temporarily disabled.
-    //! @todo Don't forget to remove this as soon Fsensor Detection works with mmu
-    if(!mmu_enabled) MENU_ITEM_FUNCTION_P(PSTR("Fsensor Detection"), lcd_detect_IRsensor);
+    MENU_ITEM_FUNCTION_P(PSTR("Fsensor Detection"), lcd_detect_IRsensor);
 #endif //IR_SENSOR_ANALOG
     MENU_END();
 }
@@ -6402,13 +6404,13 @@ void unload_filament()
 	//		extr_unload2();
 
 	current_position[E_AXIS] -= 45;
-	plan_buffer_line_curposXYZE(5200 / 60);
+	plan_buffer_line_curposXYZE(5200 / 60, active_extruder);
 	st_synchronize();
 	current_position[E_AXIS] -= 15;
-	plan_buffer_line_curposXYZE(1000 / 60);
+	plan_buffer_line_curposXYZE(1000 / 60, active_extruder);
 	st_synchronize();
 	current_position[E_AXIS] -= 20;
-	plan_buffer_line_curposXYZE(1000 / 60);
+	plan_buffer_line_curposXYZE(1000 / 60, active_extruder);
 	st_synchronize();
 
 	lcd_display_message_fullscreen_P(_T(MSG_PULL_OUT_FILAMENT));
@@ -6688,7 +6690,7 @@ static bool fan_error_selftest()
 	fanSpeedSoftPwm = 255;
 #endif //FAN_SOFT_PWM
     manage_heater(); //enables print fan
-    setExtruderAutoFanState(3); //force enables the extruder fan
+    setExtruderAutoFanState(EXTRUDER_0_AUTO_FAN_PIN, 1); //force enables the extruder fan untill the first manage_heater() call.
 #ifdef FAN_SOFT_PWM
     extruder_autofan_last_check = _millis();
     fan_measuring = true;
@@ -6696,7 +6698,6 @@ static bool fan_error_selftest()
     _delay(1000); //delay_keep_alive would turn off extruder fan, because temerature is too low (maybe)
     manage_heater();
     fanSpeed = 0;
-	setExtruderAutoFanState(1); //releases lock on the extruder fan
 #ifdef FAN_SOFT_PWM
     fanSpeedSoftPwm = 0;
 #endif //FAN_SOFT_PWM
@@ -7369,13 +7370,13 @@ void lcd_print_stop()
     cancel_heatup = true; //unroll temperature wait loop stack.
 
     current_position[Z_AXIS] += 10; //lift Z.
-    plan_buffer_line_curposXYZE(manual_feedrate[Z_AXIS] / 60);
+    plan_buffer_line_curposXYZE(manual_feedrate[Z_AXIS] / 60, active_extruder);
 
     if (axis_known_position[X_AXIS] && axis_known_position[Y_AXIS]) //if axis are homed, move to parked position.
     {
         current_position[X_AXIS] = X_CANCEL_POS;
         current_position[Y_AXIS] = Y_CANCEL_POS;
-        plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+        plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
     }
     st_synchronize();
 
@@ -7523,8 +7524,8 @@ void lcd_belttest()
 
 #ifdef IR_SENSOR_ANALOG
 // called also from marlin_main.cpp
-void printf_IRSensorAnalogBoardChange(){
-    printf_P(PSTR("Filament sensor board change detected: revision%S\n"), FsensorIRVersionText());
+void printf_IRSensorAnalogBoardChange(bool bPCBrev04){
+    printf_P(PSTR("Filament sensor board change detected: revision%S\n"), bPCBrev04 ? _T(MSG_04_OR_NEWER) : _T(MSG_03_OR_OLDER));
 }
 
 static bool lcd_selftest_IRsensor(bool bStandalone)
@@ -7549,8 +7550,8 @@ static bool lcd_selftest_IRsensor(bool bStandalone)
         return(false);
     }
     if((bPCBrev04 ? 1 : 0) != (uint8_t)oFsensorPCB){        // safer then "(uint8_t)bPCBrev04"
+        printf_IRSensorAnalogBoardChange(bPCBrev04);
         oFsensorPCB=bPCBrev04 ? ClFsensorPCB::_Rev04 : ClFsensorPCB::_Old;
-        printf_IRSensorAnalogBoardChange();
         eeprom_update_byte((uint8_t*)EEPROM_FSENSOR_PCB,(uint8_t)oFsensorPCB);
     }
     return(true);
@@ -7558,26 +7559,22 @@ static bool lcd_selftest_IRsensor(bool bStandalone)
 
 static void lcd_detect_IRsensor(){
     bool bAction;
-    bool loaded;
+
     bMenuFSDetect = true;                               // inhibits some code inside "manage_inactivity()"
-    /// Check if filament is loaded. If it is loaded stop detection.
-    /// @todo Add autodetection with MMU2s
-    loaded = ! READ(IR_SENSOR_PIN);
-    if(loaded ){
-        lcd_show_fullscreen_message_and_wait_P(_i("Please unload the filament first, then repeat this action."));
-        return;
-    } else {
-        lcd_show_fullscreen_message_and_wait_P(_i("Please check the IR sensor connections and filament is unloaded."));
-        bAction = lcd_selftest_IRsensor(true);
-    }
+    bAction = lcd_show_fullscreen_message_yes_no_and_wait_P(_i("Is filament loaded?"), false, false);
     if(bAction){
+        lcd_show_fullscreen_message_and_wait_P(_i("Please unload the filament first, then repeat this action."));////c=20 r=4
+        return;
+    }
+    bAction = lcd_selftest_IRsensor(true);
+	if(bAction){
         lcd_show_fullscreen_message_and_wait_P(_i("Sensor verified, remove the filament now."));////c=20 r=3
-        // the fsensor board has been successfully identified, any previous "not responding" may be cleared now
-        fsensor_not_responding = false;
+		// the fsensor board has been successfully identified, any previous "not responding" may be cleared now
+		fsensor_not_responding = false;
     } else {
         lcd_show_fullscreen_message_and_wait_P(_i("Verification failed, remove the filament and try again."));////c=20 r=5
-        // here it is unclear what to to with the fsensor_not_responding flag
-    }
+		// here it is unclear what to to with the fsensor_not_responding flag
+	}
     bMenuFSDetect=false;                              // de-inhibits some code inside "manage_inactivity()"
 }
 #endif //IR_SENSOR_ANALOG
@@ -7593,17 +7590,9 @@ bool lcd_selftest()
 	bool _result = true;
 	bool _swapped_fan = false;
 #ifdef IR_SENSOR_ANALOG
-	//!   Check if IR sensor is in unknown state, if so run Fsensor Detection
-	//!   As the Fsensor Detection isn't yet ready for the mmu2s we set temporarily the IR sensor 0.3 or older for mmu2s
-	//! @todo Don't forget to remove this as soon Fsensor Detection works with mmu
-	if( oFsensorPCB == ClFsensorPCB::_Undef) {
-		if (!mmu_enabled) {
-			lcd_detect_IRsensor();
-		}
-		else {
-			eeprom_update_byte((uint8_t*)EEPROM_FSENSOR_PCB,0);
-		}
-	}
+	//!   Check if IR sensor is in unknown state, set it temporarily to 0.3 or older
+	//! @todo This has to be improved
+	if( oFsensorPCB == ClFsensorPCB::_Undef) eeprom_update_byte((uint8_t*)EEPROM_FSENSOR_PCB,0);
 #endif //IR_SENSOR_ANALOG
 	lcd_wait_for_cool_down();
 	lcd_clear();
@@ -7741,7 +7730,7 @@ bool lcd_selftest()
 		current_position[Y_AXIS] += 4;
 #endif //TMC2130
 		current_position[Z_AXIS] = current_position[Z_AXIS] + 10;
-		plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+		plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 		st_synchronize();
         set_destination_to_current();
 		_progress = lcd_selftest_screen(TestScreen::AxisZ, _progress, 3, true, 1500);
@@ -7753,7 +7742,7 @@ bool lcd_selftest()
 
 		//raise Z to not damage the bed during and hotend testing
 		current_position[Z_AXIS] += 20;
-		plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+		plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 		st_synchronize();
 	}
 
@@ -7761,7 +7750,7 @@ bool lcd_selftest()
 	if (_result)
 	{
 		current_position[Z_AXIS] = current_position[Z_AXIS] + 10;
-		plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+		plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 		st_synchronize();
 		_progress = lcd_selftest_screen(TestScreen::Home, 0, 2, true, 0);
 		bool bres = tmc2130_home_calibrate(X_AXIS);
@@ -7811,12 +7800,10 @@ bool lcd_selftest()
 				_progress = lcd_selftest_screen(TestScreen::FsensorOk, _progress, 3, true, 2000); //fil sensor OK
 			}
 #endif //PAT9125
-#if 0
-	// Intentionally disabled - that's why we moved the detection to runtime by just checking the two voltages.
-	// The idea is not to force the user to remove and insert the filament on an assembled printer.
-//def IR_SENSOR_ANALOG
+//#ifdef IR_SENSOR_ANALOG
+#if (0)
 			_progress = lcd_selftest_screen(TestScreen::Fsensor, _progress, 3, true, 2000); //check filament sensor
-			_result = lcd_selftest_IRsensor();
+               _result = lcd_selftest_IRsensor();
 			if (_result)
 			{
 				_progress = lcd_selftest_screen(TestScreen::FsensorOk, _progress, 3, true, 2000); //filament sensor OK
@@ -7859,7 +7846,7 @@ bool lcd_selftest()
 
 static void reset_crash_det(unsigned char axis) {
 	current_position[axis] += 10;
-	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 	st_synchronize();
 	if (eeprom_read_byte((uint8_t*)EEPROM_CRASH_DET)) tmc2130_sg_stop_on_crash = true;
 }
@@ -7889,7 +7876,7 @@ static bool lcd_selfcheck_axis_sg(unsigned char axis) {
 // first axis length measurement begin	
 	
 	current_position[axis] -= (axis_length + margin);
-	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 
 	
 	st_synchronize();
@@ -7899,11 +7886,11 @@ static bool lcd_selfcheck_axis_sg(unsigned char axis) {
 	current_position_init = st_get_position_mm(axis);
 
 	current_position[axis] += 2 * margin;
-	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 	st_synchronize();
 
 	current_position[axis] += axis_length;
-	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 
 	st_synchronize();
 
@@ -7919,11 +7906,11 @@ static bool lcd_selfcheck_axis_sg(unsigned char axis) {
 
 
 	current_position[axis] -= margin;
-	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 	st_synchronize();	
 
 	current_position[axis] -= (axis_length + margin);
-	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 		
 	st_synchronize();
 
@@ -7948,7 +7935,7 @@ static bool lcd_selfcheck_axis_sg(unsigned char axis) {
 
 			lcd_selftest_error(TestError::Axis, _error_1, "");
 			current_position[axis] = 0;
-			plan_set_position_curposXYZE();
+			plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
 			reset_crash_det(axis);
 			enable_endstops(true);
 			endstops_hit_on_purpose();
@@ -7968,13 +7955,13 @@ static bool lcd_selfcheck_axis_sg(unsigned char axis) {
 
 			lcd_selftest_error(TestError::Pulley, _error_1, "");
 			current_position[axis] = 0;
-			plan_set_position_curposXYZE();
+			plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
 			reset_crash_det(axis);
 			endstops_hit_on_purpose();
 			return false;
 		}
 		current_position[axis] = 0;
-		plan_set_position_curposXYZE();
+		plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
 		reset_crash_det(axis);
 		endstops_hit_on_purpose();
 		return true;
@@ -7996,13 +7983,13 @@ static bool lcd_selfcheck_axis(int _axis, int _travel)
 
 	if (_axis == X_AXIS) {
 		current_position[Z_AXIS] += 17;
-		plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+		plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 	}
 
 	do {
 		current_position[_axis] = current_position[_axis] - 1;
 
-		plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+		plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 		st_synchronize();
 #ifdef TMC2130
 		if ((READ(Z_MIN_PIN) ^ (bool)Z_MIN_ENDSTOP_INVERTING))
@@ -8082,7 +8069,7 @@ static bool lcd_selfcheck_axis(int _axis, int _travel)
 		}
 	}    
 	current_position[_axis] = 0; //simulate axis home to avoid negative numbers for axis position, especially Z.
-	plan_set_position_curposXYZE();
+	plan_set_position(current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS], current_position[E_AXIS]);
 
 	return _stepresult;
 }
@@ -8105,17 +8092,17 @@ static bool lcd_selfcheck_pulleys(int axis)
 	current_position_init = current_position[axis];
 
 	current_position[axis] += 2;
-	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 	for (i = 0; i < 5; i++) {
 		refresh_cmd_timeout();
 		current_position[axis] = current_position[axis] + move;
 		st_current_set(0, 850); //set motor current higher
-		plan_buffer_line_curposXYZE(200);
+		plan_buffer_line_curposXYZE(200, active_extruder);
 		st_synchronize();
           if (SilentModeMenu != SILENT_MODE_OFF) st_current_set(0, tmp_motor[0]); //set back to normal operation currents
 		else st_current_set(0, tmp_motor_loud[0]); //set motor current back			
 		current_position[axis] = current_position[axis] - move;
-		plan_buffer_line_curposXYZE(50);
+		plan_buffer_line_curposXYZE(50, active_extruder);
 		st_synchronize();
 		if (((READ(X_MIN_PIN) ^ X_MIN_ENDSTOP_INVERTING) == 1) ||
 			((READ(Y_MIN_PIN) ^ Y_MIN_ENDSTOP_INVERTING) == 1)) {
@@ -8132,7 +8119,7 @@ static bool lcd_selfcheck_pulleys(int axis)
 			endstop_triggered = true;
 			if (current_position_init - 1 <= current_position[axis] && current_position_init + 1 >= current_position[axis]) {
 				current_position[axis] += 10;
-				plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+				plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 				st_synchronize();
 				return(true);
 			}
@@ -8143,7 +8130,7 @@ static bool lcd_selfcheck_pulleys(int axis)
 		}
 		else {
 			current_position[axis] -= 1;
-			plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+			plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 			st_synchronize();
 			if (_millis() > timeout_counter) {
 				lcd_selftest_error(TestError::Pulley, (axis == 0) ? "X" : "Y", "");
@@ -8173,7 +8160,7 @@ static bool lcd_selfcheck_endstops()
 	#endif //!TMC2130
 		if ((READ(Z_MIN_PIN) ^ Z_MIN_ENDSTOP_INVERTING) == 1) current_position[2] += 10;
 	}
-	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60);
+	plan_buffer_line_curposXYZE(manual_feedrate[0] / 60, active_extruder);
 	st_synchronize();
 
 	if (
@@ -8499,7 +8486,8 @@ static bool lcd_selftest_manual_fan_check(int _fan, bool check_opposite,
 		lcd_set_cursor(0, 1);
 		if(check_opposite == true) lcd_puts_P(_T(MSG_SELFTEST_COOLING_FAN)); 
 		else lcd_puts_P(_T(MSG_SELFTEST_EXTRUDER_FAN));
-		setExtruderAutoFanState(3);
+		SET_OUTPUT(EXTRUDER_0_AUTO_FAN_PIN);
+		WRITE(EXTRUDER_0_AUTO_FAN_PIN, 1);
 		break;
 	case 1:
 		// object cooling fan
@@ -8528,6 +8516,23 @@ static bool lcd_selftest_manual_fan_check(int _fan, bool check_opposite,
 	lcd_button_pressed = false;
 	do
 	{
+		switch (_fan)
+		{
+		case 0:
+			// extruder cooling fan
+			SET_OUTPUT(EXTRUDER_0_AUTO_FAN_PIN);
+			WRITE(EXTRUDER_0_AUTO_FAN_PIN, 1);
+			break;
+		case 1:
+			// object cooling fan
+			SET_OUTPUT(FAN_PIN);
+#ifdef FAN_SOFT_PWM
+			fanSpeedSoftPwm = 255;
+#else //FAN_SOFT_PWM
+			analogWrite(FAN_PIN, 255);
+#endif //FAN_SOFT_PWM
+			break;
+		}
 		if (abs((enc_dif - lcd_encoder_diff)) > 2) {
 			if (enc_dif > lcd_encoder_diff) {
 				_result = !check_opposite;
@@ -8554,7 +8559,8 @@ static bool lcd_selftest_manual_fan_check(int _fan, bool check_opposite,
 
 	} while (!lcd_clicked());
 	KEEPALIVE_STATE(IN_HANDLER);
-	setExtruderAutoFanState(0);
+	SET_OUTPUT(EXTRUDER_0_AUTO_FAN_PIN);
+	WRITE(EXTRUDER_0_AUTO_FAN_PIN, 0);
 	SET_OUTPUT(FAN_PIN);
 #ifdef FAN_SOFT_PWM
 	fanSpeedSoftPwm = 0;
@@ -8574,13 +8580,13 @@ static FanCheck lcd_selftest_fan_auto(int _fan)
 	case 0:
 		fanSpeed = 0;
 		manage_heater();			//turn off fan
-		setExtruderAutoFanState(3); //extruder fan
+		setExtruderAutoFanState(EXTRUDER_0_AUTO_FAN_PIN, 1); //extruder fan
 #ifdef FAN_SOFT_PWM
 		extruder_autofan_last_check = _millis();
 		fan_measuring = true;
 #endif //FAN_SOFT_PWM
-		_delay(2000);
-		setExtruderAutoFanState(0); //extruder fan
+		_delay(2000);				//delay_keep_alive would turn off extruder fan, because temerature is too low
+
 		manage_heater();			//count average fan speed from 2s delay and turn off fans
 
 		printf_P(PSTR("Test 1:\n"));
@@ -8665,7 +8671,7 @@ static FanCheck lcd_selftest_fan_auto(int _fan)
 static int lcd_selftest_screen(TestScreen screen, int _progress, int _progress_scale, bool _clear, int _delay)
 {
 
-	lcd_update_enable(false);
+    lcd_update_enable(false);
 
 	const char *_indicator = (_progress >= _progress_scale) ? "-" : "|";
 
@@ -8713,7 +8719,7 @@ static int lcd_selftest_screen(TestScreen screen, int _progress, int _progress_s
 	{
 		//SERIAL_ECHOLNPGM("Other tests");
 
-		TestScreen _step_block = TestScreen::AxisX;
+	    TestScreen _step_block = TestScreen::AxisX;
 		lcd_selftest_screen_step(2, 2, ((screen == _step_block) ? 1 : (screen < _step_block) ? 0 : 2), "X", _indicator);
 
 		_step_block = TestScreen::AxisY;
@@ -8725,8 +8731,8 @@ static int lcd_selftest_screen(TestScreen screen, int _progress, int _progress_s
 		_step_block = TestScreen::Bed;
 		lcd_selftest_screen_step(3, 0, ((screen == _step_block) ? 1 : (screen < _step_block) ? 0 : 2), "Bed", _indicator);
 
-		_step_block = TestScreen::Hotend;
-		lcd_selftest_screen_step(3, 9, ((screen == _step_block) ? 1 : (screen < _step_block) ? 0 : 2), "Hotend", _indicator);
+        _step_block = TestScreen::Hotend;
+        lcd_selftest_screen_step(3, 9, ((screen == _step_block) ? 1 : (screen < _step_block) ? 0 : 2), "Hotend", _indicator);
 	}
 
 	if (_delay > 0) delay_keep_alive(_delay);

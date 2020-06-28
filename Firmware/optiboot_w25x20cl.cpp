@@ -99,11 +99,9 @@ struct block_t;
 extern struct block_t *block_buffer;
 
 //! @brief Enter an STK500 compatible Optiboot boot loader waiting for flashing the languages to an external flash memory.
-//! @return 1 if "start\n" was not sent. Optiboot was skipped
-//! @return 0 if "start\n" was sent. Optiboot ran normally. No need to send "start\n" in setup()
-uint8_t optiboot_w25x20cl_enter()
+void optiboot_w25x20cl_enter()
 {
-  if (boot_app_flags & BOOT_APP_FLG_USER0) return 1;
+  if (boot_app_flags & BOOT_APP_FLG_USER0) return;
   uint8_t ch;
   uint8_t rampz = 0;
   register uint16_t address = 0;
@@ -122,46 +120,38 @@ uint8_t optiboot_w25x20cl_enter()
     unsigned long  boot_timer = 0;
     const char    *ptr = entry_magic_send;
     const char    *end = strlen_P(entry_magic_send) + ptr;
-    const uint8_t selectedSerialPort_bak = selectedSerialPort;
+    // Initialize the serial line.
+    UCSR0A |= (1 << U2X0);
+    UBRR0L = (((float)(F_CPU))/(((float)(115200))*8.0)-1.0+0.5);
+    UCSR0B = (1 << RXEN0) | (1 << TXEN0);
     // Flush the serial line.
     while (RECV_READY) {
       watchdogReset();
       // Dummy register read (discard)
       (void)(*(char *)UDR0);
     }
-    selectedSerialPort = 0; //switch to Serial0
-    MYSERIAL.flush(); //clear RX buffer
-    int SerialHead = rx_buffer.head;
     // Send the initial magic string.
     while (ptr != end)
       putch(pgm_read_byte(ptr ++));
     watchdogReset();
-    // Wait for two seconds until a magic string (constant entry_magic) is received
+    // Wait for one second until a magic string (constant entry_magic) is received
     // from the serial line.
     ptr = entry_magic_receive;
     end = strlen_P(entry_magic_receive) + ptr;
     while (ptr != end) {
-      while (rx_buffer.head == SerialHead) {
+      while (! RECV_READY) {
         watchdogReset();
         delayMicroseconds(1);
         if (++ boot_timer > boot_timeout)
-        {
           // Timeout expired, continue with the application.
-          selectedSerialPort = selectedSerialPort_bak; //revert Serial setting
-          return 0;
-        }
+          return;
       }
-      ch = rx_buffer.buffer[SerialHead];
-      SerialHead = (unsigned int)(SerialHead + 1) % RX_BUFFER_SIZE;
+      ch = UDR0;
       if (pgm_read_byte(ptr ++) != ch)
-      {
           // Magic was not received correctly, continue with the application
-          selectedSerialPort = selectedSerialPort_bak; //revert Serial setting
-          return 0;
-      }
+          return;
       watchdogReset();
     }
-    cbi(UCSR0B, RXCIE0); //disable the MarlinSerial0 interrupt
     // Send the cfm magic string.
     ptr = entry_magic_cfm;
     while (ptr != end)
