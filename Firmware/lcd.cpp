@@ -33,6 +33,7 @@
 #ifdef WEH002004_OLED
 	#define OLED_INIT 0x00
 #endif
+
 #define LCD_CLEARDISPLAY 0x01
 #define LCD_RETURNHOME 0x02
 #define LCD_ENTRYMODESET 0x04
@@ -176,7 +177,7 @@ static void lcd_begin(uint8_t clear)
 {
 	lcd_currline = 0;
 
-#ifndef WEH002004_OLED								   
+#ifndef WEH002004_OLED
 	lcd_send(LCD_FUNCTIONSET | LCD_8BITMODE, LOW | LCD_HALF_FLAG, 4500); // wait min 4.1ms
 	// second try
 	lcd_send(LCD_FUNCTIONSET | LCD_8BITMODE, LOW | LCD_HALF_FLAG, 150);
@@ -198,7 +199,7 @@ static void lcd_begin(uint8_t clear)
 	lcd_displaymode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
 	// set the entry mode
 	lcd_command(LCD_ENTRYMODESET | lcd_displaymode);
-	
+    
 #else
     lcd_displaycontrol = LCD_CURSOROFF | LCD_BLINKOFF;
     lcd_displaymode = LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT;
@@ -214,13 +215,13 @@ static void lcd_begin(uint8_t clear)
     //lcd_no_display();
 	lcd_displaycontrol &= ~LCD_DISPLAYON;
 	lcd_command(LCD_DISPLAYCONTROL | lcd_displaycontrol);
-	
     lcd_command(LCD_FUNCTIONSET | lcd_displayfunction); // Set # lines, font size, etc.
     lcd_clear();
     lcd_command(LCD_ENTRYMODESET | lcd_displaymode); // Set Entry Mode
     lcd_home();
     lcd_display();
-#endif		 
+#endif
+
 	#ifdef VT100
 	lcd_escape[0] = 0;
 	#endif
@@ -255,7 +256,7 @@ void lcd_init(void)
 	lcd_displayfunction |= LCD_2LINE;
 #ifdef WEH002004_OLED
     lcd_displayfunction |= OLED_FONT_TABLE;
-#endif		 
+#endif
 	_delay_us(50000); 
 	lcd_begin(1); //first time init
 	fdev_setup_stream(lcdout, lcd_putchar, NULL, _FDEV_SETUP_WRITE); //setup lcdout stream
@@ -275,13 +276,21 @@ void lcd_refresh_noclear(void)
 
 void lcd_clear(void)
 {
+#ifdef WEH002004_OLED
 	lcd_command(LCD_CLEARDISPLAY, 1600);  // clear display, set cursor position to zero
+#else
+	lcd_command(LCD_CLEARDISPLAY, 1600);  // clear display, set cursor position to zero
+#endif
 	lcd_currline = 0;
 }
 
 void lcd_home(void)
 {
+#ifdef WEH002004_OLED
+	lcd_command(LCD_RETURNHOME, 1600);  // set cursor position to zero. TBD
+#else
 	lcd_command(LCD_RETURNHOME, 1600);  // set cursor position to zero
+#endif
 	lcd_currline = 0;
 }
 
